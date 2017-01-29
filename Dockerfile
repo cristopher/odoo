@@ -1,6 +1,3 @@
-
-MAINTAINER WeTrust EIRL. <contacto@wetrust.cl>
-
 # Install some deps, lessc and less-plugin-clean-css, and wkhtmltopdf
 RUN set -x; \
         apt-get update \
