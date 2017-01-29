@@ -1,4 +1,6 @@
-# Install some deps, lessc and less-plugin-clean-css, and wkhtmltopdf
+FROM debian:jessie
+MAINTAINER WeTrust E.I.R.L. <contacto@wetrust.cl>
+# Install some deps, le.ssc and less-plugin-clean-css, and wkhtmltopdf
 RUN set -x; \
         apt-get update \
         && apt-get install -y --no-install-recommends \
