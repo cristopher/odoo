@@ -40,7 +40,7 @@ RUN mkdir extra-addons
 RUN git clone https://github.com/odoo/odoo.git -b 8.0
 RUN ./odoo/odoo.py setup_deps
 RUN ./odoo/odoo.py setup_pg
-
+WORKDIR /home/odoo
 COPY ./entrypoint.sh 
 
 # Expose Odoo services
