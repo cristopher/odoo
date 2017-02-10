@@ -5,7 +5,7 @@ USER root
 
 RUN apt-get update -y
 RUN apt-get upgrade -y
-RUN install -y sudo
+RUN apt-get install -y sudo 
 RUN useradd -m -g sudo -s /bin/bash odoo
 apt-get install -y python-pip \
                    git vim mercurial \
