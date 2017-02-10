@@ -1,59 +1,49 @@
-FROM debian:jessie
-MAINTAINER WeTrust E.I.R.L. <contacto@wetrust.cl>
-# Install some deps, le.ssc and less-plugin-clean-css, and wkhtmltopdf
-RUN set -x; \
-        apt-get update \
-        && apt-get install -y --no-install-recommends \
-            ca-certificates \
-            curl \
-            node-less \
-            node-clean-css \
-            python-gevent \
-            python-pip \
-            python-pyinotify \
-            python-renderpm \
-            python-support \
-        && curl -o wkhtmltox.deb -SL http://odoo.wetrust.cl/wkhtmltox-0.12.1.2_linux-jessie-amd64.deb \
-        && echo '40e8b906de658a2221b15e4e8cd82565a47d7ee8 wkhtmltox.deb' | sha1sum -c - \
-        && dpkg --force-depends -i wkhtmltox.deb \
-        && apt-get -y install -f --no-install-recommends \
-        && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false -o APT::AutoRemove::SuggestsImportant=false npm \
-        && rm -rf /var/lib/apt/lists/* wkhtmltox.deb \
-        && pip install psycogreen==1.0
+FROM ubuntu:14.04
+MAINTAINER Odoo S.A. <info@odoo.com>
 
+USER root
 
-# Install Odoo
-ENV ODOO_VERSION 8.0
-ENV ODOO_RELEASE 20161123
-RUN set -x; \
-        curl -o odoo.deb -SL http://odoo.wetrust.cl/odoo_8.0.20161123_all.deb \
-        && echo 'fcc9fa35fae811958ee08a0f51dfc23242e755b6 odoo.deb' | sha1sum -c - \
-        && dpkg --force-depends -i odoo.deb \
-        && apt-get update \
-        && apt-get -y install -f --no-install-recommends \
-        && rm -rf /var/lib/apt/lists/* odoo.deb
+RUN apt-get update -y
+RUN apt-get upgrade -y
+RUN install -y sudo
+RUN useradd -m -g sudo -s /bin/bash odoo
+apt-get install -y python-pip \
+                   git vim mercurial \
+                   ghostscript \
+		   python-gevent \
+		 python-dev \
+		 freetds-dev \
+		 python-matplotlib \
+		 font-manager \
+		 swig \
+		 libffi-dev \
+		 libssl-dev \
+		 python-m2crypto \
+		 python-httplib2 \
+		 libxml2-dev \
+		 libxslt-dev \
+		 python-dev \
+		 lib32z1-dev \
+		 liblz-dev \
+		 libcups2-dev
+                 
+RUN pip install urllib3
+RUN pip install cchardet
+RUN pip install dicttoxml
+RUN pip install pysftp
 
-# Copy entrypoint script and Odoo configuration file
-COPY ./entrypoint.sh /
-COPY ./openerp-server.conf /etc/odoo/
-RUN chown odoo /etc/odoo/openerp-server.conf
-
-# Mount /var/lib/odoo to allow restoring filestore and /mnt/extra-addons for users addons
-RUN mkdir -p /mnt/extra-addons \
-        && chown -R odoo /mnt/extra-addons
-VOLUME ["/var/lib/odoo", "/mnt/extra-addons"]
+USER odoo
+WORKDIR /home/odoo
+RUN mkdir ~/odoo-dev
+WORKDIR /home/odoo/odoo-dev
+RUN mkdir extra-addons
+RUN git clone https://github.com/odoo/odoo.git -b 8.0
+RUN ./odoo/odoo.py setup_deps
+RUN ./odoo/odoo.py setup_pg
+WORKDIR /home/odoo
+COPY ./entrypoint.sh 
 
 # Expose Odoo services
 EXPOSE 8069 8071
 
-# Set the default config file
-ENV OPENERP_SERVER /etc/odoo/openerp-server.conf
-
-# add Odoo to sudoers
-RUN echo "odoo:odoo" | chpasswd && adduser odoo sudo
-
-# Set default user when running the container
-USER odoo
-
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["openerp-server"]
